@@ -207,7 +207,13 @@ void SendCapturedPhotos() {
     char *input = (char *)fb->buf;
     int chunkSize = 3 * 1000; //--> must be multiple of 3.
     int chunkBase64Size = base64_enc_len(chunkSize);
-    char output[chunkBase64Size + 1];
+    char *output = (char*)malloc(chunkBase64Size + 1);
+    if (!output) {
+      Serial.println("Failed to allocate base64 buffer");
+      esp_camera_fb_return(fb);
+      client.stop();
+      return;
+    }
 
     Serial.println();
     int chunk = 0;
@@ -228,6 +234,8 @@ void SendCapturedPhotos() {
     }
     client.print("0\r\n");
     client.print("\r\n");
+
+    free(output);
 
     esp_camera_fb_return(fb);
     //.............................. 
