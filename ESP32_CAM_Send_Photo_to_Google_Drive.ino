@@ -1,4 +1,6 @@
-String house = "House_1";
+// Device/location label used as Drive subfolder
+#include "secrets.h"
+String house = DEVICE_LABEL;
 
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -80,21 +82,19 @@ static bool is_initialised = false;
 uint8_t *snapshot_buf; // points to the resized RGB888 image used by the classifier
 static uint8_t *camera_rgb_buf = NULL; // holds full-resolution RGB888 frame before resize
 
-//======================================== Enter your WiFi ssid and password.
-const char* ssid = "wifi.";
-const char* password = "dejesus1922";
-//======================================== 
+//======================================== WiFi credentials are externalized in secrets.h
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+//========================================
 
-//======================================== Replace with your "Deployment ID" and Folder Name.
-String myDeploymentID = "AKfycbyDtCGUr2b_AQBy265J2h9wehb7qUntAWhhV1NvagHTX-VXPgqZyilDpFh0Z9e7Q_m7";
-String myMainFolderName = "ESP32-CAM";
+//======================================== Apps Script Deployment ID and Drive folders from secrets.h
+String myDeploymentID = GAS_DEPLOYMENT_ID;
+String myMainFolderName = DRIVE_MAIN_FOLDER;
 String mySubFolderName = house;
-//======================================== 
+//========================================
 
-//======================================== Variables for Timer/Millis.
-unsigned long previousMillis = 0; 
-const int Interval = 5000; //--> Capture and Send a photo every 20 seconds.
-//======================================== 
+//======================================== Variables for Timer/Millis. (unused in this sketch)
+// removed unused timing variables to reduce confusion
 
 // Variable to set capture photo with LED Flash.
 // Set to "false", then the Flash LED will not light up when capturing a photo.
@@ -145,9 +145,9 @@ void SendCapturedPhotos() {
   client.setTimeout(12000);
 
   //---------------------------------------- The Flash LED blinks once to indicate connection start.
-  // digitalWrite(FLASH_LED_PIN, HIGH);
+  digitalWrite(FLASH_LED_PIN, HIGH);
   delay(100);
-  // digitalWrite(FLASH_LED_PIN, LOW);
+  digitalWrite(FLASH_LED_PIN, LOW);
   delay(100);
   //---------------------------------------- 
 
@@ -156,7 +156,7 @@ void SendCapturedPhotos() {
     Serial.println("Connection successful.");
     
     if (LED_Flash_ON == true) {
-      // digitalWrite(FLASH_LED_PIN, HIGH);
+      digitalWrite(FLASH_LED_PIN, HIGH);
       delay(100);
     }
 
@@ -188,7 +188,7 @@ void SendCapturedPhotos() {
       return;
     } 
   
-    if (LED_Flash_ON == true) // digitalWrite(FLASH_LED_PIN, LOW);
+    if (LED_Flash_ON == true) digitalWrite(FLASH_LED_PIN, LOW);
     
     Serial.println("Taking a photo was successful.");
     //.............................. 
@@ -265,9 +265,9 @@ void SendCapturedPhotos() {
     //.............................. 
 
     //.............................. Flash LED blinks once as an indicator of successfully sending photos to Google Drive.
-    // digitalWrite(FLASH_LED_PIN, HIGH);
+    digitalWrite(FLASH_LED_PIN, HIGH);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, LOW);
+    digitalWrite(FLASH_LED_PIN, LOW);
     delay(500);
     //.............................. 
   }
@@ -275,13 +275,13 @@ void SendCapturedPhotos() {
     Serial.println("Connected to " + String(host) + " failed.");
     
     //.............................. Flash LED blinks twice as a failed connection indicator.
-    // digitalWrite(FLASH_LED_PIN, HIGH);
+    digitalWrite(FLASH_LED_PIN, HIGH);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, LOW);
+    digitalWrite(FLASH_LED_PIN, LOW);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, HIGH);
+    digitalWrite(FLASH_LED_PIN, HIGH);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, LOW);
+    digitalWrite(FLASH_LED_PIN, LOW);
     delay(500);
     //.............................. 
   }
@@ -339,7 +339,7 @@ void setup() {
     }
   }
 
-  // digitalWrite(FLASH_LED_PIN, LOW);
+  digitalWrite(FLASH_LED_PIN, LOW);
   
   Serial.println();
   Serial.print("Successfully connected to ");
