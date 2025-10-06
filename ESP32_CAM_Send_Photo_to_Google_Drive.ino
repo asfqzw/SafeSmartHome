@@ -212,13 +212,14 @@ void SendCapturedPhotos() {
     Serial.println();
     int chunk = 0;
     for (int i = 0; i < fbLen; i += chunkSize) {
-      int l = base64_encode(output, input, min(fbLen - i, chunkSize));
+      int bytesToEncode = min(fbLen - i, chunkSize);
+      int l = base64_encode(output, input, bytesToEncode);
       client.print(l, HEX);
       client.print("\r\n");
       client.print(output);
       client.print("\r\n");
       delay(100);
-      input += chunkSize;
+      input += bytesToEncode;
       Serial.print(".");
       chunk++;
       if (chunk % 50 == 0) {
