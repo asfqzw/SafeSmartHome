@@ -31,6 +31,37 @@
             android:fontFamily="@font/tan_pearl"
             android:layout_marginBottom="40dp"/>
 
+        <!-- USERNAME LABEL -->
+        <TextView
+            android:id="@+id/tvUsernameLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Username"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins_regular"
+            android:layout_gravity="start"
+            android:layout_marginBottom="6dp"
+            android:labelFor="@id/username_input" />
+
+        <!-- USERNAME FIELD -->
+        <EditText
+            android:id="@+id/username_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/roundededge"
+            android:fontFamily="@font/poppins_regular"
+            android:hint="Username"
+            android:inputType="text|textNoSuggestions"
+            android:padding="10dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/darker_gray"
+            android:maxLines="1"
+            android:imeOptions="actionNext"
+            android:autofillHints="username"
+            android:importantForAutofill="yes" />
+
         <!-- EMAIL LABEL -->
         <TextView
             android:id="@+id/tvEmailLabel"
@@ -93,20 +124,7 @@
             android:autofillHints="password"
             android:importantForAutofill="yes" />
 
-        <!-- Forgot Password -->
-        <TextView
-            android:id="@+id/tvForgot"
-            android:text="@string/forgot_pass"
-            android:textColor="#0081cc"
-            android:textSize="14sp"
-            android:layout_marginBottom="30dp"
-            android:layout_marginTop="10dp"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground"/>
+        
 
         <!-- Login Button -->
         <Button
@@ -123,7 +141,7 @@
 
         <!-- Register Section -->
         <TextView
-            android:text="@string/register_2"
+            android:text="Already have an account?"
             android:textColor="@android:color/white"
             android:gravity="center"
             android:layout_width="match_parent"
@@ -131,7 +149,7 @@
 
         <TextView
             android:id="@+id/tvSignup"
-            android:text="@string/register"
+            android:text="Sign in"
             android:textColor="#0081cc"
             android:textSize="14sp"
             android:gravity="center"
