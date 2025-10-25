@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@drawable/background">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="40dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Title -->
+            <TextView
+                android:text="@string/forgot_pass"
+                android:textColor="@android:color/white"
+                android:textSize="34sp"
+                android:fontFamily="@font/poppins_thin"
+                android:layout_marginTop="60dp"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Subtitle -->
+            <TextView
+                android:text="Don’t worry, we got you. Enter your email for password reset."
+                android:textColor="#E0E0E0"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginBottom="40dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- Email label -->
+            <TextView
+                android:text="EMAIL"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:layout_marginBottom="5dp"
+                android:fontFamily="@font/poppins_thin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- Email input -->
+            <EditText
+                android:id="@+id/etEmailForgot"
+                android:hint="juandelacruz@gmail.com"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:textColorHint="#BFBFBF"
+                android:textColor="@android:color/white"
+                android:inputType="textEmailAddress"
+                android:layout_marginBottom="30dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- Submit Button -->
+            <Button
+                android:id="@+id/btnSubmitForgot"
+                android:text="Submit"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:background="@drawable/btn_outline"
+                android:layout_marginBottom="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <!-- Back to Login -->
+            <TextView
+                android:id="@+id/tvBackLogin"
+                android:text="Back to login"
+                android:textColor="#0081cc"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginBottom="50dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+    </RelativeLayout>
+</ScrollView>
