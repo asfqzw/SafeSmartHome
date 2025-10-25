@@ -45,16 +45,19 @@
         <!-- EMAIL FIELD -->
         <EditText
             android:id="@+id/email_input"
-            android:layout_width="295dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginBottom="30dp"
             android:background="@drawable/roundededge"
             android:fontFamily="@font/poppins_regular"
-            android:text="@string/sample"
+            android:hint="@string/sample"
             android:inputType="textEmailAddress"
             android:padding="10dp"
-            android:textColor="@android:color/white"/>
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/darker_gray"
+            android:maxLines="1"
+            android:imeOptions="actionNext"
+            android:autofillHints="emailAddress" />
 
         <!-- PASSWORD LABEL -->
         <TextView
@@ -71,17 +74,19 @@
         <!-- PASSWORD FIELD -->
         <EditText
             android:id="@+id/password_input"
-            android:layout_width="295dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
             android:background="@drawable/roundededge"
             android:fontFamily="@font/poppins_regular"
-            android:text="@string/password"
+            android:hint="@string/password"
             android:inputType="textPassword"
             android:padding="10dp"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/darker_gray"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginBottom="20dp"
+            android:maxLines="1"
+            android:imeOptions="actionDone"
+            android:autofillHints="password" />
 
         <!-- Forgot Password -->
         <TextView
