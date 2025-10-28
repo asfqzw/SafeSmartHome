@@ -1,4 +1,6 @@
-String house = "House_1";
+// Device/location label used as Drive subfolder
+#include "secrets.h"
+String house = DEVICE_LABEL;
 
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -77,23 +79,22 @@ bool ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf
 
 static bool debug_nn = false; // Set this to true to see e.g. features generated from the raw signal
 static bool is_initialised = false;
-uint8_t *snapshot_buf; //points to the output of the capture
+uint8_t *snapshot_buf; // points to the resized RGB888 image used by the classifier
+static uint8_t *camera_rgb_buf = NULL; // holds full-resolution RGB888 frame before resize
 
-//======================================== Enter your WiFi ssid and password.
-const char* ssid = "wifi.";
-const char* password = "dejesus1922";
-//======================================== 
+//======================================== WiFi credentials are externalized in secrets.h
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+//========================================
 
-//======================================== Replace with your "Deployment ID" and Folder Name.
-String myDeploymentID = "AKfycbyDtCGUr2b_AQBy265J2h9wehb7qUntAWhhV1NvagHTX-VXPgqZyilDpFh0Z9e7Q_m7";
-String myMainFolderName = "ESP32-CAM";
+//======================================== Apps Script Deployment ID and Drive folders from secrets.h
+String myDeploymentID = GAS_DEPLOYMENT_ID;
+String myMainFolderName = DRIVE_MAIN_FOLDER;
 String mySubFolderName = house;
-//======================================== 
+//========================================
 
-//======================================== Variables for Timer/Millis.
-unsigned long previousMillis = 0; 
-const int Interval = 5000; //--> Capture and Send a photo every 20 seconds.
-//======================================== 
+//======================================== Variables for Timer/Millis. (unused in this sketch)
+// removed unused timing variables to reduce confusion
 
 // Variable to set capture photo with LED Flash.
 // Set to "false", then the Flash LED will not light up when capturing a photo.
@@ -113,6 +114,7 @@ void Test_Con() {
     Serial.println("Connect to " + String(host));
   
     client.setInsecure();
+    client.setTimeout(12000);
   
     if (client.connect(host, 443)) {
       Serial.println("Connection successful.");
@@ -140,11 +142,12 @@ void SendCapturedPhotos() {
   Serial.println("Connect to " + String(host));
   
   client.setInsecure();
+  client.setTimeout(12000);
 
   //---------------------------------------- The Flash LED blinks once to indicate connection start.
-  // digitalWrite(FLASH_LED_PIN, HIGH);
+  digitalWrite(FLASH_LED_PIN, HIGH);
   delay(100);
-  // digitalWrite(FLASH_LED_PIN, LOW);
+  digitalWrite(FLASH_LED_PIN, LOW);
   delay(100);
   //---------------------------------------- 
 
@@ -153,7 +156,7 @@ void SendCapturedPhotos() {
     Serial.println("Connection successful.");
     
     if (LED_Flash_ON == true) {
-      // digitalWrite(FLASH_LED_PIN, HIGH);
+      digitalWrite(FLASH_LED_PIN, HIGH);
       delay(100);
     }
 
@@ -185,7 +188,7 @@ void SendCapturedPhotos() {
       return;
     } 
   
-    if (LED_Flash_ON == true) // digitalWrite(FLASH_LED_PIN, LOW);
+    if (LED_Flash_ON == true) digitalWrite(FLASH_LED_PIN, LOW);
     
     Serial.println("Taking a photo was successful.");
     //.............................. 
@@ -200,25 +203,35 @@ void SendCapturedPhotos() {
 
     client.println("POST " + url + " HTTP/1.1");
     client.println("Host: " + String(host));
+    client.println("User-Agent: ESP32-CAM");
+    client.println("Content-Type: text/plain");
+    client.println("Connection: close");
     client.println("Transfer-Encoding: chunked");
     client.println();
 
     int fbLen = fb->len;
     char *input = (char *)fb->buf;
-    int chunkSize = 3 * 1000; //--> must be multiple of 3.
+    int chunkSize = 3 * 1024; //--> must be multiple of 3.
     int chunkBase64Size = base64_enc_len(chunkSize);
-    char output[chunkBase64Size + 1];
+    char *output = (char *)malloc(chunkBase64Size + 1);
+    if (!output) {
+      Serial.println("Not enough memory for base64 buffer");
+      esp_camera_fb_return(fb);
+      client.stop();
+      return;
+    }
 
     Serial.println();
     int chunk = 0;
     for (int i = 0; i < fbLen; i += chunkSize) {
-      int l = base64_encode(output, input, min(fbLen - i, chunkSize));
+      int thisChunk = min(fbLen - i, chunkSize);
+      int l = base64_encode(output, input, thisChunk);
       client.print(l, HEX);
       client.print("\r\n");
       client.print(output);
       client.print("\r\n");
       delay(100);
-      input += chunkSize;
+      input += thisChunk;
       Serial.print(".");
       chunk++;
       if (chunk % 50 == 0) {
@@ -227,6 +240,8 @@ void SendCapturedPhotos() {
     }
     client.print("0\r\n");
     client.print("\r\n");
+
+    free(output);
 
     esp_camera_fb_return(fb);
     //.............................. 
@@ -250,9 +265,9 @@ void SendCapturedPhotos() {
     //.............................. 
 
     //.............................. Flash LED blinks once as an indicator of successfully sending photos to Google Drive.
-    // digitalWrite(FLASH_LED_PIN, HIGH);
+    digitalWrite(FLASH_LED_PIN, HIGH);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, LOW);
+    digitalWrite(FLASH_LED_PIN, LOW);
     delay(500);
     //.............................. 
   }
@@ -260,13 +275,13 @@ void SendCapturedPhotos() {
     Serial.println("Connected to " + String(host) + " failed.");
     
     //.............................. Flash LED blinks twice as a failed connection indicator.
-    // digitalWrite(FLASH_LED_PIN, HIGH);
+    digitalWrite(FLASH_LED_PIN, HIGH);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, LOW);
+    digitalWrite(FLASH_LED_PIN, LOW);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, HIGH);
+    digitalWrite(FLASH_LED_PIN, HIGH);
     delay(500);
-    // digitalWrite(FLASH_LED_PIN, LOW);
+    digitalWrite(FLASH_LED_PIN, LOW);
     delay(500);
     //.............................. 
   }
@@ -324,7 +339,7 @@ void setup() {
     }
   }
 
-  // digitalWrite(FLASH_LED_PIN, LOW);
+  digitalWrite(FLASH_LED_PIN, LOW);
   
   Serial.println();
   Serial.print("Successfully connected to ");
@@ -340,13 +355,13 @@ void setup() {
   
   // init with high specs to pre-allocate larger buffers
   if(psramFound()){
-    config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 10;  //0-63 lower number means higher quality
-    config.fb_count = 2;
+    camera_config.frame_size = FRAMESIZE_UXGA;
+    camera_config.jpeg_quality = 10;  //0-63 lower number means higher quality
+    camera_config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_SVGA;
-    config.jpeg_quality = 8;  //0-63 lower number means higher quality
-    config.fb_count = 1;
+    camera_config.frame_size = FRAMESIZE_SVGA;
+    camera_config.jpeg_quality = 8;  //0-63 lower number means higher quality
+    camera_config.fb_count = 1;
   }
   
   // camera init
@@ -368,7 +383,8 @@ void setup() {
   // -QVGA   = 320 x 240   pixels
   // -HQVGA  = 240 x 160   pixels
   // -QQVGA  = 160 x 120   pixels
-  s->set_framesize(s, FRAMESIZE_SXGA);  //--> UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA
+  // Align sensor framesize with EI buffer to avoid overflows
+  s->set_framesize(s, FRAMESIZE_QVGA);  //--> UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA
 
   Serial.println("Setting the camera successfully.");
   Serial.println();
@@ -396,7 +412,7 @@ void loop() {
         return;
     }
 
-    snapshot_buf = (uint8_t*)malloc(EI_CAMERA_RAW_FRAME_BUFFER_COLS * EI_CAMERA_RAW_FRAME_BUFFER_ROWS * EI_CAMERA_FRAME_BYTE_SIZE);
+  snapshot_buf = (uint8_t*)malloc(EI_CLASSIFIER_INPUT_WIDTH * EI_CLASSIFIER_INPUT_HEIGHT * EI_CAMERA_FRAME_BYTE_SIZE);
 
     // check if allocation was successful
     if(snapshot_buf == nullptr) {
@@ -557,6 +573,15 @@ bool ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf
         return false;
     }
 
+    if (camera_rgb_buf == NULL) {
+        size_t raw_rgb_size = EI_CAMERA_RAW_FRAME_BUFFER_COLS * EI_CAMERA_RAW_FRAME_BUFFER_ROWS * EI_CAMERA_FRAME_BYTE_SIZE;
+        camera_rgb_buf = (uint8_t*)malloc(raw_rgb_size);
+        if (!camera_rgb_buf) {
+            ei_printf("ERR: Failed to allocate camera_rgb_buf\n");
+            return false;
+        }
+    }
+
     camera_fb_t *fb = esp_camera_fb_get();
 
     if (!fb) {
@@ -564,7 +589,7 @@ bool ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf
         return false;
     }
 
-   bool converted = fmt2rgb888(fb->buf, fb->len, PIXFORMAT_JPEG, snapshot_buf);
+   bool converted = fmt2rgb888(fb->buf, fb->len, PIXFORMAT_JPEG, camera_rgb_buf);
 
    esp_camera_fb_return(fb);
 
@@ -581,11 +606,14 @@ bool ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf
     if (do_resize) {
         ei::image::processing::crop_and_interpolate_rgb888(
         out_buf,
-        EI_CAMERA_RAW_FRAME_BUFFER_COLS,
-        EI_CAMERA_RAW_FRAME_BUFFER_ROWS,
-        out_buf,
         img_width,
-        img_height);
+        img_height,
+        camera_rgb_buf,
+        EI_CAMERA_RAW_FRAME_BUFFER_COLS,
+        EI_CAMERA_RAW_FRAME_BUFFER_ROWS);
+    } else {
+        // No resize needed, copy the full-resolution buffer
+        memcpy(out_buf, camera_rgb_buf, EI_CAMERA_RAW_FRAME_BUFFER_COLS * EI_CAMERA_RAW_FRAME_BUFFER_ROWS * EI_CAMERA_FRAME_BYTE_SIZE);
     }
 
 
