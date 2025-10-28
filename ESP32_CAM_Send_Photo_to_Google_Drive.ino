@@ -185,8 +185,8 @@ void SendCapturedPhotos() {
       return;
     } 
   
-    if (LED_Flash_ON == true) // digitalWrite(FLASH_LED_PIN, LOW);
-    
+    if (LED_Flash_ON == true) { /* digitalWrite(FLASH_LED_PIN, LOW); */ }
+
     Serial.println("Taking a photo was successful.");
     //.............................. 
 
@@ -207,18 +207,25 @@ void SendCapturedPhotos() {
     char *input = (char *)fb->buf;
     int chunkSize = 3 * 1000; //--> must be multiple of 3.
     int chunkBase64Size = base64_enc_len(chunkSize);
-    char output[chunkBase64Size + 1];
+    char *output = (char*)malloc(chunkBase64Size + 1);
+    if (!output) {
+      Serial.println("Failed to allocate base64 buffer");
+      esp_camera_fb_return(fb);
+      client.stop();
+      return;
+    }
 
     Serial.println();
     int chunk = 0;
     for (int i = 0; i < fbLen; i += chunkSize) {
-      int l = base64_encode(output, input, min(fbLen - i, chunkSize));
+      int bytesToEncode = min(fbLen - i, chunkSize);
+      int l = base64_encode(output, input, bytesToEncode);
       client.print(l, HEX);
       client.print("\r\n");
       client.print(output);
       client.print("\r\n");
       delay(100);
-      input += chunkSize;
+      input += bytesToEncode;
       Serial.print(".");
       chunk++;
       if (chunk % 50 == 0) {
@@ -227,6 +234,8 @@ void SendCapturedPhotos() {
     }
     client.print("0\r\n");
     client.print("\r\n");
+
+    free(output);
 
     esp_camera_fb_return(fb);
     //.............................. 
@@ -340,13 +349,13 @@ void setup() {
   
   // init with high specs to pre-allocate larger buffers
   if(psramFound()){
-    config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 10;  //0-63 lower number means higher quality
-    config.fb_count = 2;
+    camera_config.frame_size = FRAMESIZE_UXGA;
+    camera_config.jpeg_quality = 10;  //0-63 lower number means higher quality
+    camera_config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_SVGA;
-    config.jpeg_quality = 8;  //0-63 lower number means higher quality
-    config.fb_count = 1;
+    camera_config.frame_size = FRAMESIZE_SVGA;
+    camera_config.jpeg_quality = 8;  //0-63 lower number means higher quality
+    camera_config.fb_count = 1;
   }
   
   // camera init
@@ -368,7 +377,8 @@ void setup() {
   // -QVGA   = 320 x 240   pixels
   // -HQVGA  = 240 x 160   pixels
   // -QQVGA  = 160 x 120   pixels
-  s->set_framesize(s, FRAMESIZE_SXGA);  //--> UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA
+  // Match framesize to EI buffer (320x240) to avoid overflow
+  s->set_framesize(s, FRAMESIZE_QVGA);  //--> UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA
 
   Serial.println("Setting the camera successfully.");
   Serial.println();
@@ -580,12 +590,12 @@ bool ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf
 
     if (do_resize) {
         ei::image::processing::crop_and_interpolate_rgb888(
-        out_buf,
-        EI_CAMERA_RAW_FRAME_BUFFER_COLS,
-        EI_CAMERA_RAW_FRAME_BUFFER_ROWS,
-        out_buf,
-        img_width,
-        img_height);
+            snapshot_buf,
+            EI_CAMERA_RAW_FRAME_BUFFER_COLS,
+            EI_CAMERA_RAW_FRAME_BUFFER_ROWS,
+            out_buf,
+            img_width,
+            img_height);
     }
 
 
